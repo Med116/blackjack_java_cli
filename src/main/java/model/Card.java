@@ -52,9 +52,9 @@ public class Card {
         this.ace = ace;
     }
 
-    public static enum Suit{ HEARTS, CLUBS, DIAMONDS, SPADES}
+    public static enum Suit {HEARTS, CLUBS, DIAMONDS, SPADES}
 
-    public Card(Suit suit, int cardVal ){
+    public Card(Suit suit, int cardVal) {
 
         this.setSuit(suit);
         this.setCardVal(cardVal);
@@ -62,11 +62,11 @@ public class Card {
 
     }
 
-    private void  initCard(){
+    private void initCard() {
 
         String ofSuit = " of " + getSuit() + "'s";
 
-        switch(getCardVal()) {
+        switch (getCardVal()) {
             case 1:
                 setCardName("ACE");
                 setAce(true);
@@ -75,17 +75,17 @@ public class Card {
             case 11:
                 setCardName("JACK");
                 setCardVal(10);
-                royalty =true;
+                royalty = true;
                 break;
             case 12:
                 setCardName("QUEEN");
                 setCardVal(10);
-                royalty =true;
+                royalty = true;
                 break;
             case 13:
                 setCardName("KING");
                 setCardVal(10);
-                royalty =true;
+                royalty = true;
                 break;
             default:
                 setCardName(String.valueOf(getCardVal()));
@@ -96,7 +96,7 @@ public class Card {
 
 
     @Override
-    public String toString(){
-        return cardName + ( royalty || isAce() ?  "=(" + cardVal + ")" : "");
+    public String toString() {
+        return cardName + (royalty || isAce() ? "=(" + cardVal + ")" : "");
     }
 }
