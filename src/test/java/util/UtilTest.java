@@ -1,6 +1,7 @@
 package util;
 
 import model.Card;
+import model.Dealer;
 import org.junit.Test;
 
 import java.util.List;

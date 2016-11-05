@@ -1,7 +1,7 @@
 package game;
 
 import model.Card;
-import util.Dealer;
+import model.Dealer;
 
 import java.util.List;
 import java.util.Scanner;
@@ -20,7 +20,7 @@ public class Game {
     private static int tieCount = 0;
 
 
-    public Game(){
+    public Game() {
 
         System.out.println("Welcome to BLACKJACK!");
         this.dealer = new Dealer();
@@ -29,8 +29,8 @@ public class Game {
     }
 
 
-    public String getCardsDisplayText(List<Card> cardsToPrint, boolean human){
-        String cardNames =   cardsToPrint.stream()
+    public String getCardsDisplayText(List<Card> cardsToPrint, boolean human) {
+        String cardNames = cardsToPrint.stream()
                 .map(Card::toString)
                 .collect(Collectors.joining(" | "));
 
@@ -40,18 +40,18 @@ public class Game {
 
         int cardCount = checkCards(cardsToPrint);
 
-        return String.format("%s Cards =>  %s ---  or ,( %s ) --- Sum: %d", human ? "Your "  : "Dealer's " , cardNames, cardVals, cardCount);
+        return String.format("%s Cards =>  %s ---  or ,( %s ) --- Sum: %d", human ? "Your " : "Dealer's ", cardNames, cardVals, cardCount);
     }
 
-    public int checkCards(List<Card> cardsToCount){
+    public int checkCards(List<Card> cardsToCount) {
         int count = cardsToCount.stream()
                 .mapToInt(Card::getCardVal)
                 .sum();
 
         // recursively turns aces into 1's if the count is > 21, until there are no more aces in the players handH
-        if(count > 21){
-            for(Card card : cards){
-                if(card.isAce() && card.getCardVal() == 11){
+        if (count > 21) {
+            for (Card card : cards) {
+                if (card.isAce() && card.getCardVal() == 11) {
                     card.setCardVal(1);
                     return checkCards(cardsToCount);
                 }
@@ -72,7 +72,6 @@ public class Game {
         // compare cards - see if they are both 21 to see if its a tie, or a win for the 21 getter
 
         while (cardsLeftCount() > 0 && gameOver == false) {
-
 
 
             humanCards = dealer.deal(2, cards);
@@ -104,10 +103,9 @@ public class Game {
             }
 
 
-
             if (humansTurn) {
                 System.out.println(getCardsDisplayText(humanCards, true));
-                if(cardsLeftCount() > 0){
+                if (cardsLeftCount() > 0) {
                     humanStay = humanDecide(humanCards, scanner);
 
 
@@ -132,7 +130,7 @@ public class Game {
                         }
                     }
                     humansTurn = false;
-                }else{
+                } else {
                     System.out.println("No more cards");
                     gameOver = true;
                     break;
@@ -143,13 +141,13 @@ public class Game {
                 System.out.println("DEALERS TURN");
                 int countOfDealersCards = checkCards(dealerCards);
                 while (countOfDealersCards < 17) {
-                    if(cardsLeftCount() > 0){
+                    if (cardsLeftCount() > 0) {
                         hit(dealerCards, false);
                         if (checkCards(dealerCards) > 21) {
                             System.out.println("DEALER BUSTED!");
                         }
                         countOfDealersCards = checkCards(dealerCards);
-                    }else{
+                    } else {
                         System.out.println("No more cards");
                         gameOver = true;
                         break;
@@ -212,15 +210,14 @@ public class Game {
         System.out.println("The tied " + tieCount + " times.");
 
 
-
     }
 
 
-    private int cardsLeftCount(){
+    private int cardsLeftCount() {
         return (int) cards.stream().filter(card -> card.isDealt() == false).count();
     }
 
-    private void gameOver(String msg, Scanner scanner){
+    private void gameOver(String msg, Scanner scanner) {
         System.out.println(msg);
         //System.out.println("Enter 'Y' to continue playing, (any other key to stop) there are " + cardsLeftCount() + " cards left ");
         //gameOver  = scanner.nextLine().toLowerCase().equals("y") ? false : true;
@@ -229,32 +226,32 @@ public class Game {
     /*
     * if a hit makes cards over 21, the true is sent back for going over
      */
-    private boolean hit(List<Card> playersCards, boolean human){
-        if(cardsLeftCount() > 0){
+    private boolean hit(List<Card> playersCards, boolean human) {
+        if (cardsLeftCount() > 0) {
             List<Card> cardHitList = dealer.deal(1, cards);
             Card cardHit = cardHitList.get(0);
             playersCards.add(cardHit);
-            if(human){
+            if (human) {
                 System.out.println(getCardsDisplayText(playersCards, human));
 
-            }else{
+            } else {
                 // show thinking ...
-                for(int i = 0; i < 5 ; i++){
-                    try{
+                for (int i = 0; i < 5; i++) {
+                    try {
                         Thread.sleep(500);
                         System.out.print(".");
-                        if(i == 4){
+                        if (i == 4) {
                             System.out.println("");
                         }
-                    }catch (InterruptedException e){
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
                 }
                 System.out.println("Dealer Hit a card.");
-                System.out.println(getCardsDisplayText(playersCards,  human));
+                System.out.println(getCardsDisplayText(playersCards, human));
             }
-        }else{
+        } else {
             System.out.println("Tried to deal a card when there were no cards left");
             return false;
         }
@@ -262,15 +259,15 @@ public class Game {
     }
 
 
-    private boolean humanDecide(List<Card> humanCards, Scanner scanner){
+    private boolean humanDecide(List<Card> humanCards, Scanner scanner) {
         System.out.println("Press 'H' to Draw/Hit a new card, or 'S' to stand (Then hit enter)");
         String humanAction = scanner.nextLine().toLowerCase();
-        if(humanAction.equals("h")){
+        if (humanAction.equals("h")) {
             hit(humanCards, true);
             return false;
-        }else if(humanAction.equals("s")){
+        } else if (humanAction.equals("s")) {
             return true;
-        }else{
+        } else {
             System.out.println("Please enter 'S' to stand or 'H' to hit.");
             return humanDecide(humanCards, scanner);
         }
