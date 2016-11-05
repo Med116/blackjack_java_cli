@@ -30,6 +30,8 @@ public class Game {
 
 
     public String getCardsDisplayText(List<Card> cardsToPrint, boolean human) {
+        int cardCount = checkCards(cardsToPrint);
+
         String cardNames = cardsToPrint.stream()
                 .map(Card::toString)
                 .collect(Collectors.joining(" | "));
@@ -38,27 +40,40 @@ public class Game {
                 .map(card -> "[" + card.getCardVal() + "]")
                 .collect(Collectors.joining(""));
 
-        int cardCount = checkCards(cardsToPrint);
+
 
         return String.format("%s Cards =>  %s ---  or ,( %s ) --- Sum: %d", human ? "Your " : "Dealer's ", cardNames, cardVals, cardCount);
     }
 
     public int checkCards(List<Card> cardsToCount) {
-        int count = cardsToCount.stream()
+        int sum = cardsToCount.stream()
                 .mapToInt(Card::getCardVal)
                 .sum();
 
-        // recursively turns aces into 1's if the count is > 21, until there are no more aces in the players handH
-        if (count > 21) {
-            for (Card card : cards) {
+        int aceCount = (int)cardsToCount.stream()
+                .filter(card-> card.isAce() && card.getCardVal() == 11)
+                .count();
+
+        while (sum > 21 && aceCount > 0) {
+
+            for(int i = 0; i < cardsToCount.size() ;i++){
+                Card card = cardsToCount.get(i);
                 if (card.isAce() && card.getCardVal() == 11) {
                     card.setCardVal(1);
-                    return checkCards(cardsToCount);
+                    cardsToCount.set(i, card);
+                    break;
                 }
+                aceCount = (int)cardsToCount.stream()
+                        .filter(c-> c.isAce() && c.getCardVal() == 11)
+                        .count();
             }
+            sum = cardsToCount.stream()
+                    .mapToInt(Card::getCardVal)
+                    .sum();
+
         }
 
-        return count;
+        return sum;
     }
 
     public void start() {
@@ -73,10 +88,10 @@ public class Game {
 
         while (cardsLeftCount() > 0 && gameOver == false) {
 
-
+            roundCount++;
             humanCards = dealer.deal(2, cards);
             dealerCards = dealer.deal(2, cards);
-            roundCount++;
+
             System.out.println("=== ROUND " + roundCount + " ====");
             System.out.println("YOU : " + humanWins + " | DEALER: " + dealerWins);
             System.out.println("CARDS LEFT: " + cardsLeftCount());
@@ -132,6 +147,7 @@ public class Game {
                     humansTurn = false;
                 } else {
                     System.out.println("No more cards");
+                    roundCount--;
                     gameOver = true;
                     break;
                 }
@@ -149,6 +165,7 @@ public class Game {
                         countOfDealersCards = checkCards(dealerCards);
                     } else {
                         System.out.println("No more cards");
+                        roundCount--;
                         gameOver = true;
                         break;
                     }
