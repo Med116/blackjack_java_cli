@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 public class Game {
 
-    private List<Card> cards;
+    public List<Card> cards;
     private Dealer dealer;
     private List<Card> humanCards;
     private List<Card> dealerCards;
@@ -18,6 +18,8 @@ public class Game {
     private static int humanWins = 0;
     private static int dealerWins = 0;
     private static int tieCount = 0;
+    private static boolean humansTurn = true;
+    private static final Scanner SCANNER = new Scanner(System.in);
 
 
     public Game() {
@@ -25,12 +27,13 @@ public class Game {
         System.out.println("Welcome to BLACKJACK!");
         this.dealer = new Dealer();
         this.cards = dealer.createDeck();
-        start();
+        cards = dealer.shuffleDeck(cards);
+
     }
 
 
     public String getCardsDisplayText(List<Card> cardsToPrint, boolean human) {
-        int cardCount = checkCards(cardsToPrint);
+        int cardCount = sumCards(cardsToPrint);
 
         String cardNames = cardsToPrint.stream()
                 .map(Card::toString)
@@ -41,209 +44,177 @@ public class Game {
                 .collect(Collectors.joining(""));
 
 
-
-        return String.format("%s Cards =>  %s ---  or ,( %s ) --- Sum: %d", human ? "Your " : "Dealer's ", cardNames, cardVals, cardCount);
+        return String.format("%s Cards =>  %s - ,( %s ) --- Sum: %d", human ? "Your " : "Dealer's ", cardNames, cardVals, cardCount);
     }
 
-    public int checkCards(List<Card> cardsToCount) {
+    public int sumCards(List<Card> cardsToCount) {
         int sum = cardsToCount.stream()
                 .mapToInt(Card::getCardVal)
                 .sum();
 
-        int aceCount = (int)cardsToCount.stream()
-                .filter(card-> card.isAce() && card.getCardVal() == 11)
+        int aceCount = (int) cardsToCount.stream()
+                .filter(card -> card.isAce() && card.getCardVal() == 11)
                 .count();
-
-        while (sum > 21 && aceCount > 0) {
-
-            for(int i = 0; i < cardsToCount.size() ;i++){
-                Card card = cardsToCount.get(i);
-                if (card.isAce() && card.getCardVal() == 11) {
-                    card.setCardVal(1);
-                    cardsToCount.set(i, card);
-                    break;
-                }
-                aceCount = (int)cardsToCount.stream()
-                        .filter(c-> c.isAce() && c.getCardVal() == 11)
-                        .count();
-            }
-            sum = cardsToCount.stream()
+        if (aceCount > 0) {
+            int aceSum = cardsToCount.stream()
+                    .filter(card -> card.isAce())
+                    .mapToInt(Card::getCardVal)
+                    .sum();
+            int nonAceSum = cardsToCount.stream()
+                    .filter(card -> !card.isAce())
                     .mapToInt(Card::getCardVal)
                     .sum();
 
-        }
+            if (aceSum + nonAceSum > 21) {
+                while (aceCount > 0) {
 
+                    for (int i = 0; i < cardsToCount.size(); i++) {
+                        Card card = cardsToCount.get(i);
+                        if (card.isAce() && card.getCardVal() == 11) {
+                            card.setCardVal(1);
+                            cardsToCount.set(i, card);
+                            break;
+                        }
+                        aceCount = (int) cardsToCount.stream()
+                                .filter(c -> c.isAce() && c.getCardVal() == 11)
+                                .count();
+                    }
+                    sum = cardsToCount.stream()
+                            .mapToInt(Card::getCardVal)
+                            .sum();
+                }
+            }
+        }
         return sum;
     }
 
     public void start() {
 
-        cards = dealer.shuffleDeck(cards);
-        Scanner scanner = new Scanner(System.in);
-        boolean humansTurn = true;
-        boolean humanStay = false;
-
-
-        // compare cards - see if they are both 21 to see if its a tie, or a win for the 21 getter
-
-        while (cardsLeftCount() > 0 && gameOver == false) {
-
+        while (cardsLeftCount() > 0) {
             roundCount++;
-            humanCards = dealer.deal(2, cards);
-            dealerCards = dealer.deal(2, cards);
 
-            System.out.println("=== ROUND " + roundCount + " ====");
-            System.out.println("YOU : " + humanWins + " | DEALER: " + dealerWins);
-            System.out.println("CARDS LEFT: " + cardsLeftCount());
-            System.out.println("===============");
-            humansTurn = true;
+            if (cardsLeftCount() > 4) {
+                humanCards = dealer.deal(2, cards);
+                dealerCards = dealer.deal(2, cards);
+            } else {
+                System.out.println("Not enough cards to deal");
+                break;
+            }
 
-            // we only do this login on first round, because the data will be changed on subsequent rounds
-            if (checkCards(humanCards) == 21 && checkCards(dealerCards) == 21) {
-                gameOver("You Both Got 21 to start with Tie Game!", scanner);
+            printStats();
+
+            if (sumCards(humanCards) == 21 && sumCards(dealerCards) == 21) {
+                System.out.println("TIE");
                 tieCount++;
                 continue;
             }
 
-            if (checkCards(humanCards) == 21) {
-                gameOver("YOU GOT 21 (and the dealer didn't)! YOU WON!", scanner);
+            if (sumCards(humanCards) == 21 && sumCards(dealerCards) < 21) {
+                System.out.println("YOU WIN ON DEAL");
                 humanWins++;
                 continue;
             }
 
-            if (checkCards(dealerCards) == 21) {
-                gameOver("DEALER GOT 21 (and the you didn't)! YOU LOST :(", scanner);
+            if (sumCards(dealerCards) == 21 && sumCards(humanCards) < 21) {
                 dealerWins++;
+                System.out.println("DEALER WINS ON DEAL");
                 continue;
             }
 
 
-            if (humansTurn) {
-                System.out.println(getCardsDisplayText(humanCards, true));
-                if (cardsLeftCount() > 0) {
-                    humanStay = humanDecide(humanCards, scanner);
-
-
-                    if (checkCards(humanCards) > 21) {
-                        System.out.println("YOU BUSTED!");
-                        humansTurn = false;
-                        humanStay = true;
-
-                    }
-                    while (humanStay == false) {
-
-                        humanStay = humanDecide(humanCards, scanner);  //"'H' Hit returns false" 'S' true
-
-                        if (humanStay == true) {
-                            humansTurn = false; // forces top loop to go to dealers condition
-                        }
-
-                        if (checkCards(humanCards) > 21) {
-                            System.out.println("YOU BUSTED!");
-                            humansTurn = false; // forces top loop to go to dealers condition
-                            humanStay = true; // gets out of this while
-                        }
-                    }
-                    humansTurn = false;
-                } else {
-                    System.out.println("No more cards");
-                    roundCount--;
-                    gameOver = true;
-                    break;
-                }
-
-            } else {
-                // this is the dealers logic
-                System.out.println("DEALERS TURN");
-                int countOfDealersCards = checkCards(dealerCards);
-                while (countOfDealersCards < 17) {
-                    if (cardsLeftCount() > 0) {
-                        hit(dealerCards, false);
-                        if (checkCards(dealerCards) > 21) {
-                            System.out.println("DEALER BUSTED!");
-                        }
-                        countOfDealersCards = checkCards(dealerCards);
-                    } else {
-                        System.out.println("No more cards");
-                        roundCount--;
-                        gameOver = true;
-                        break;
-                    }
-
-                }
-                System.out.println("DEALER STAYED");
-            }
-
-            System.out.println("ROUND DONE, HERE ARE THE RESULTS");
-            System.out.println(getCardsDisplayText(dealerCards, false));
-
+            System.out.println("YOUR TURN : ROUND: " + roundCount + "\n####\nCARDS LEFT " + cardsLeftCount());
+            // human
             System.out.println(getCardsDisplayText(humanCards, true));
 
-            int totalHumanCount = checkCards(humanCards);
-            int totalDealerCount = checkCards(dealerCards);
+            if (cardsLeftCount() > 1) {
+                boolean humanStay = humanDecide(humanCards);
+                if (sumCards(humanCards) < 21) {
+                    while (humanStay == false) {
+                        humanStay = humanDecide(humanCards);
+                        System.out.println(getCardsDisplayText(humanCards, true));
+                        if (sumCards(humanCards) >= 21) {
+                            System.out.println("Your cards >= 21, breaking");
+                            break;
+                        }
+                    }
+                } else if (sumCards(humanCards) == 21) {
+                    System.out.println("You Got 21!, Dealers turn noe");
+                } else {
+                    System.out.println("You Busted :(");
+                }
+            }
 
-            if (totalDealerCount > 21 && totalHumanCount > 21) {
-                gameOver("You Both Busted, Dealer Wins", scanner);
+            // dealer
+            System.out.println("Dealers turn");
+            while (sumCards(dealerCards) < 17) {
+                boolean enoughCards = hit(dealerCards, false);
+                if (!enoughCards) {
+                    break;
+                }
+                System.out.println(getCardsDisplayText(dealerCards, false));
+
+            }
+            System.out.println("Dealer stayed");
+
+            int humanSum = sumCards(humanCards);
+            int dealerSum = sumCards(dealerCards);
+            System.out.println(String.format("Human %s, Dealer %s", humanSum, dealerSum));
+
+            if (humanSum > 21 && dealerSum > 21) {
+                System.out.println("DEALER WINS (BOTH BUSTED)");
                 dealerWins++;
                 continue;
             }
 
-            if (totalHumanCount > 21 && totalDealerCount <= 21) {
-                gameOver("You Busted, Dealer Wins", scanner);
-                dealerWins++;
-                continue;
-            }
+            if (humanSum <= 21 && dealerSum <= 21) {
 
-            if (totalDealerCount > 21 && totalHumanCount <= 21) {
-                gameOver("Dealer Busted, You Win", scanner);
+                if (humanSum > dealerSum) {
+                    System.out.println("YOU WIN!");
+                    humanWins++;
+                } else if (dealerSum > humanSum) {
+                    System.out.println("DEALER WINS :(");
+                    dealerWins++;
+                } else if (dealerSum == humanSum) {
+                    System.out.println("YOU TIED UP");
+                    tieCount++;
+                } else {
+                    System.out.println("DEAULT CONDITION");
+                }
+            }
+            if (humanSum <= 21 && dealerSum > 21) {
+                System.out.println("DEALER BUSTED");
                 humanWins++;
-                continue;
-
             }
 
-            if (totalDealerCount == totalHumanCount) {
-                gameOver("You Both Had the same score, (" + totalHumanCount + ") Tie Game", scanner);
-                tieCount++;
-                continue;
-            }
-
-            if (totalDealerCount > totalHumanCount) {
-                gameOver("DEALER WON :(", scanner);
+            if (dealerSum <= 21 && humanSum > 21) {
+                System.out.println("YOU BUSTED");
                 dealerWins++;
-                continue;
-
-            } else {
-                gameOver("YOU WON :)", scanner);
-                humanWins++;
             }
+
 
         }
-
-        System.out.println("GAME OVER, Thanks For Playing!");
-
-        System.out.println("You played " + roundCount + " rounds");
-        System.out.println("You won " + humanWins + " times.");
-        System.out.println("The dealer won " + dealerWins + " times.");
-        System.out.println("The tied " + tieCount + " times.");
+        System.out.println("ALL DONE, NO MORE CARDS");
+        printStats();
 
 
     }
 
+    private void printStats() {
+
+        System.out.println("\t YOU :" + humanWins);
+        System.out.println("\t DEALER: " + dealerWins);
+        System.out.println("\t TIES: " + tieCount);
+    }
 
     private int cardsLeftCount() {
         return (int) cards.stream().filter(card -> card.isDealt() == false).count();
     }
 
-    private void gameOver(String msg, Scanner scanner) {
-        System.out.println(msg);
-        //System.out.println("Enter 'Y' to continue playing, (any other key to stop) there are " + cardsLeftCount() + " cards left ");
-        //gameOver  = scanner.nextLine().toLowerCase().equals("y") ? false : true;
-    }
 
     /*
     * if a hit makes cards over 21, the true is sent back for going over
      */
-    private boolean hit(List<Card> playersCards, boolean human) {
+    public boolean hit(List<Card> playersCards, boolean human) {
         if (cardsLeftCount() > 0) {
             List<Card> cardHitList = dealer.deal(1, cards);
             Card cardHit = cardHitList.get(0);
@@ -276,9 +247,9 @@ public class Game {
     }
 
 
-    private boolean humanDecide(List<Card> humanCards, Scanner scanner) {
+    private boolean humanDecide(List<Card> humanCards) {
         System.out.println("Press 'H' to Draw/Hit a new card, or 'S' to stand (Then hit enter)");
-        String humanAction = scanner.nextLine().toLowerCase();
+        String humanAction = SCANNER.nextLine().toLowerCase();
         if (humanAction.equals("h")) {
             hit(humanCards, true);
             return false;
@@ -286,8 +257,7 @@ public class Game {
             return true;
         } else {
             System.out.println("Please enter 'S' to stand or 'H' to hit.");
-            return humanDecide(humanCards, scanner);
+            return humanDecide(humanCards);
         }
     }
-
 }
