@@ -13,12 +13,10 @@ public class Game {
     private Dealer dealer;
     private List<Card> humanCards;
     private List<Card> dealerCards;
-    private boolean gameOver = false;
     private static int roundCount = 0;
     private static int humanWins = 0;
     private static int dealerWins = 0;
     private static int tieCount = 0;
-    private static boolean humansTurn = true;
     private static final Scanner SCANNER = new Scanner(System.in);
 
 
@@ -55,51 +53,28 @@ public class Game {
         int aceCount = (int) cardsToCount.stream()
                 .filter(card -> card.isAce() && card.getCardVal() == 11)
                 .count();
-        if (aceCount > 0) {
-            int aceSum = cardsToCount.stream()
-                    .filter(card -> card.isAce())
-                    .mapToInt(Card::getCardVal)
-                    .sum();
 
-            int nonAceSum = cardsToCount.stream()
-                    .filter(card -> !card.isAce())
-                    .mapToInt(Card::getCardVal)
-                    .sum();
+        while (aceCount > 0 && sum > 21) {
 
-            if (aceSum + nonAceSum > 21) {
-                aceloop:
-                while (aceCount > 0 ) {
-
-                    for (int i = 0; i < cardsToCount.size(); i++) {
-                        Card card = cardsToCount.get(i);
-                        if (card.isAce() && card.getCardVal() == 11) {
-                            card.setCardVal(1);
-                            cardsToCount.set(i, card);
-                            break;
-                        }
-                        aceCount = (int) cardsToCount.stream()
-                                .filter(c -> c.isAce() && c.getCardVal() == 11)
-                                .count();
-
-                        int cardSum = cardsToCount.stream()
-                                .mapToInt(Card::getCardVal)
-                                .sum();
-
-
-
-                        if (cardSum  <= 21) {
-                            break aceloop;
-                        }
-
-                    }
-
-                    sum = cardsToCount.stream()
-                            .mapToInt(Card::getCardVal)
-                            .sum();
-
+            for (int i = 0; i < cardsToCount.size(); i++) {
+                Card card = cardsToCount.get(i);
+                if (card.isAce() && card.getCardVal() == 11) {
+                    card.setCardVal(1);
+                    cardsToCount.set(i, card);
+                    break;
                 }
+                aceCount = (int) cardsToCount.stream()
+                        .filter(c -> c.isAce() && c.getCardVal() == 11)
+                        .count();
+
             }
+
+            sum = cardsToCount.stream()
+                    .mapToInt(Card::getCardVal)
+                    .sum();
+
         }
+
         return sum;
     }
 
