@@ -60,13 +60,15 @@ public class Game {
                     .filter(card -> card.isAce())
                     .mapToInt(Card::getCardVal)
                     .sum();
+
             int nonAceSum = cardsToCount.stream()
                     .filter(card -> !card.isAce())
                     .mapToInt(Card::getCardVal)
                     .sum();
 
             if (aceSum + nonAceSum > 21) {
-                while (aceCount > 0) {
+                aceloop:
+                while (aceCount > 0 ) {
 
                     for (int i = 0; i < cardsToCount.size(); i++) {
                         Card card = cardsToCount.get(i);
@@ -78,10 +80,23 @@ public class Game {
                         aceCount = (int) cardsToCount.stream()
                                 .filter(c -> c.isAce() && c.getCardVal() == 11)
                                 .count();
+
+                        int cardSum = cardsToCount.stream()
+                                .mapToInt(Card::getCardVal)
+                                .sum();
+
+
+
+                        if (cardSum  <= 21) {
+                            break aceloop;
+                        }
+
                     }
+
                     sum = cardsToCount.stream()
                             .mapToInt(Card::getCardVal)
                             .sum();
+
                 }
             }
         }

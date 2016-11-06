@@ -7,6 +7,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -69,6 +70,66 @@ public class GameTest {
 
         assertEquals(23, game.sumCards(aceKingEightFour));
         assertEquals(4, aceKingEightFour.size());
+
+    }
+
+    @Test
+    public void test4Aces() {
+        Dealer dealer = new Dealer();
+        List<Card> cards = dealer.createDeck();
+
+        List<Card> aces = cards.
+                stream()
+                .filter(card -> card.isAce())
+                .limit(4)
+                .collect(Collectors.toList());
+
+
+        Game game = new Game();
+        assertEquals(14, game.sumCards(aces));
+
+    }
+
+    // ace , nine, jack
+
+    @Test
+    public void testAceNineJack() {
+        Dealer dealer = new Dealer();
+        List<Card> cards = dealer.createDeck();
+
+        List<Card> aceNineJack = new ArrayList<>();
+
+        Card ace = cards.
+                stream()
+                .filter(card -> card.isAce())
+                .limit(1)
+                .findFirst()
+                .get();
+
+        aceNineJack.add(ace);
+
+
+        Card jack = cards.
+                stream()
+                .filter(card -> card.getCardName().startsWith("JACK"))
+                .limit(1)
+                .findFirst()
+                .get();
+
+        aceNineJack.add(jack);
+
+
+        Card nine = cards.
+                stream()
+                .filter(card -> card.getCardVal() == 9)
+                .limit(1)
+                .findFirst()
+                .get();
+
+        aceNineJack.add(nine);
+
+        Game game = new Game();
+        assertEquals(20, game.sumCards(aceNineJack));
 
 
     }
